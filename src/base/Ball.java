@@ -56,8 +56,12 @@ public class Ball implements Movable{
         hitBox = new Rectangle(x, y, width, height);
     }
 
-    public double getAngle() {
+    public double getAngle(){
         return angle;
+    }
+
+    public double getSpeed(){
+        return speed;
     }
 
     public int getIncreaseX(){
@@ -71,7 +75,7 @@ public class Ball implements Movable{
     public void move(){
         x += (int) (speed * Math.cos(Math.toRadians(angle)));
         if ((int) (speed * Math.sin(Math.toRadians(angle))) == 0){
-            y += 1;
+            y -= 1;
         } else {
             y += (int) (speed * Math.sin(Math.toRadians(angle)));
         }
@@ -82,11 +86,12 @@ public class Ball implements Movable{
         }
     }
 
-    public void setSpeed(double s){
-        speed = s;
-    }
     public void setAngle(double a){
         angle = a;
+    }
+
+    public void setSpeed(double s){
+        speed = s;
     }
 
     public void bounceH(){

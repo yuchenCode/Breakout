@@ -11,6 +11,7 @@ public class Paddle implements Hittable, Movable {
     private int width;
     private int height;
     private Rectangle hitBox;
+    private int speed;
     private Listener pListener;
     private boolean canHit;
     private boolean normalState;
@@ -22,6 +23,7 @@ public class Paddle implements Hittable, Movable {
         this.width = Settings.PADDLE_NORMAL_WIDTH;
         this.height = Settings.PADDLE_HEIGHT;
         hitBox = new Rectangle(x, y, width, Settings.PADDLE_HEIGHT);
+        speed = Settings.PADDLE_SPEED;
         pListener = pl;
         canHit = true;
         normalState = true;
@@ -41,15 +43,15 @@ public class Paddle implements Hittable, Movable {
     }
 
     public int getSideX() {
-        if (normalState) {
-            return Settings.PADDLE_NORMAL_WIDTH / 3;
-        } else {
-            return Settings.PADDLE_SUPER_WIDTH / 3;
-        }
+        return width / 3;
     }
 
     public Rectangle getHitBox() {
         return hitBox;
+    }
+
+    public void setSpeed(int s){
+        speed = s;
     }
 
     public boolean getCanHit() {
@@ -63,11 +65,11 @@ public class Paddle implements Hittable, Movable {
 
     public void move() {
         if (pListener.isLeft() && x > 0) {
-            x -= Settings.PADDLE_SPEED;
+            x -= speed;
             hitBox.setLocation(x, y);
         }
         if (pListener.isRight() && (x + width) < Settings.GAME_WIDTH) {
-            x += Settings.PADDLE_SPEED;
+            x += speed;
             hitBox.setLocation(x, y);
         }
     }

@@ -1,8 +1,5 @@
 package base;
 
-import ui.GameScreen;
-import ui.Listener;
-
 public class Bonus extends Ball{
 
     private boolean exist;

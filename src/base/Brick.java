@@ -2,7 +2,6 @@ package base;
 
 import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 public class Brick implements Hittable{
 
@@ -19,19 +18,18 @@ public class Brick implements Hittable{
         hitBox = new Rectangle(x, y, Settings.BRICK_WIDTH, Settings.BRICK_HEIGHT);
         this.color = color;
         exist = true;
-//        int bonusNumber = new Random().nextInt(4);
-//        if (bonusNumber == 0) {
-//            bonusKind = "Multi-ball";
-//        } else if (bonusNumber == 1) {
-//            bonusKind = "Wide-Paddle";
-//        } else if (bonusNumber == 2) {
-//            bonusKind = "Sticky-Paddle";
-//        } else if (bonusNumber == 3) {
-//            bonusKind = "Laser";
-//        } else {
-//            bonusKind = "null";
-//        }
-        bonusKind = "Laser";
+        int bonusNumber = new Random().nextInt(100);
+        if (bonusNumber == 0) {
+            bonusKind = "Multi-ball";
+        } else if (bonusNumber == 1) {
+            bonusKind = "Wide-Paddle";
+        } else if (bonusNumber == 2) {
+            bonusKind = "Sticky-Paddle";
+        } else if (bonusNumber == 3) {
+            bonusKind = "Laser";
+        } else {
+            bonusKind = "null";
+        }
     }
 
     public int getCenterX(){

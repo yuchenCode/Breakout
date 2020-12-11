@@ -52,7 +52,7 @@ public class ScoreRecorder {
 	}
 
 	public void saveScores() {
-	    // Just a place holder for the persistent subclass
+	    // for override
 	}
 
 	public void addScore(String name, int s) {

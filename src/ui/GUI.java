@@ -6,6 +6,8 @@ import base.Settings;
 
 public class GUI{
     public static void main(String[] args) {
+
+        // set window
         JFrame window = new JFrame();
         window.setSize(Settings.SCREEN_WIDTH,Settings.SCREEN_HEIGHT);
         window.setResizable(false);
@@ -17,6 +19,7 @@ public class GUI{
         Menu menu = new Menu(window, keyListener);
         window.setVisible(true);
         window.requestFocusInWindow();
+        // entrance
         menu.run();
     }
 }

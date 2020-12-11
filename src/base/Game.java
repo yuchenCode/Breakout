@@ -5,7 +5,9 @@ import ui.Listener;
 import utils.RandomDoubleCreator;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class Game implements Runnable{
 
@@ -19,7 +21,7 @@ public class Game implements Runnable{
     private Level[] levels;
     private int currentLevel = 0;
     private int destroyedBrick = 0;
-    private Ball ball;
+    private List<Ball> ballList;
     private Paddle paddle;
     private Bonus bonus;
     private boolean canReleaseBonus = true;
@@ -42,7 +44,8 @@ public class Game implements Runnable{
         levels[2] = new Level(3);
         levels[3] = new Level(4);
         levels[4] = new Level(5);
-        ball = new Ball(Settings.BALL_ORIGIN_X, Settings.BALL_ORIGIN_Y, Settings.BALL_DIAMETER, Settings.BALL_DIAMETER);
+        ballList = new ArrayList<>();
+        ballList.add(new Ball(Settings.BALL_ORIGIN_X, Settings.BALL_ORIGIN_Y, Settings.BALL_DIAMETER, Settings.BALL_DIAMETER));
         paddle = new Paddle(Settings.PADDLE_ORIGIN_X, keyListener);
     }
 
@@ -54,32 +57,16 @@ public class Game implements Runnable{
         return levels[currentLevel].getTotalBrick() - destroyedBrick;
     }
 
-    public GameScreen getGameScreen(){
-        return gameScreen;
-    }
-
-    public Listener getKeyListener(){
-        return keyListener;
-    }
-
-    public boolean isPaused() {
-        return pause;
-    }
-
-    public double getNow(){
-        return now;
-    }
-
-    public double getLastUpdateTime(){
-        return lastUpdateTime;
-    }
-
-    public double getLastRenderTime() {
-        return lastRenderTime;
-    }
-
-    public int getUpdateCount(){
-        return updateCount;
+    // check if all balls are out
+    public boolean allBallOut(){
+        boolean out = true;
+        for (Ball b : ballList) {
+            if (b.isOut() == false) {
+                out = false;
+                break;
+            }
+        }
+        return out;
     }
 
     public void run(){
@@ -88,35 +75,39 @@ public class Game implements Runnable{
         lastRenderTime = System.nanoTime();
         bonusExistCount = 0;
 
-        while (live > 0 && destroyedBrick != levels[currentLevel].getTotalBrick() && !ball.isOut()) {
-            if (!ball.isOut() && !pause) {
+        while (live > 0 && destroyedBrick != levels[currentLevel].getTotalBrick() && !allBallOut()) {
+            if (!allBallOut() && !pause) {
                 updateCount = 0;
+                // update game
                 while (now - lastUpdateTime > Settings.TIME_BETWEEN_UPDATES && updateCount < Settings.MAX_UPDATES_BEFORE_RENDER) {
                     updateGame();
                     lastUpdateTime += Settings.TIME_BETWEEN_UPDATES;
                     updateCount++;
+                    // control bonus remain time
                     if (bonus != null && bonus.isBegin()) {
                         bonusExistCount++;
                     }
                     if (bonusExistCount > Settings.MAX_BONUS_EXIST_TIME) {
-                        bonusExistCount = 0;
-                        bonus.setClose();
                         closeBonus();
                     }
                 }
+                // paint/render game
                 paintGame();
             } else {
                 lastUpdateTime = System.nanoTime();
                 if (keyListener.isPause()) {
                     pause = false;
                 }
+                gameScreen.paintImmediately(Settings.GAME_BOUND);
                 try {
                     Thread.sleep(5);
                 } catch (InterruptedException e) {
                 }
             }
         }
+
         if (live > 0 && destroyedBrick == levels[currentLevel].getTotalBrick()) {
+            // pass level
             currentLevel++;
             if (currentLevel < Settings.FINAL_LEVEL) {
                 destroyedBrick = 0;
@@ -127,7 +118,8 @@ public class Game implements Runnable{
             }
         } else if (live == 0) {
             // end game
-        } else if (ball.isOut()) {
+        } else if (allBallOut()) {
+            // end live
             reset();
             live--;
             run();
@@ -139,7 +131,6 @@ public class Game implements Runnable{
 
     public void paintGame(){
         gameScreen.paintImmediately(Settings.GAME_BOUND);
-        //System.out.println();
         lastRenderTime = now;
 
         while (now - lastRenderTime < Settings.TARGET_TIME_BETWEEN_RENDERS) {
@@ -157,18 +148,30 @@ public class Game implements Runnable{
     }
 
     private void updateGame(){
-        moveBall();
-        hitBrick();
-        if (bonus != null) {
-            moveBonus();
+        if (ballList.size() == 1) {
+            moveBall(ballList.get(0));
+            hitBrick(ballList.get(0));
+            if (bonus != null) {
+                moveBonus();
+            }
+            hitPaddle(ballList.get(0));
+            boundBounce(ballList.get(0));
+            if (laser != null) {
+                fireLaser();
+            }
+        } else {
+            for (Ball b : ballList) {
+                moveBall(b);
+                hitBrick(b);
+                hitPaddle(b);
+                boundBounce(b);
+            }
         }
-        hitPaddle();
-        boundBounce();
     }
 
-    private void moveBall(){
+    private void moveBall(Ball ball){
         if (keyListener.isLaunch() && !launch) {
-            ball.launch();
+            ballList.get(0).launch();
             launch = true;
             sticky = false;
         }
@@ -181,28 +184,29 @@ public class Game implements Runnable{
         }
         if (sticky) {
             paddle.move();
+            // sticky ball and laser move with paddle
             moveWithPaddle(ball);
         }
     }
 
     private void moveWithPaddle(Ball b){
-        if (keyListener.isLeft()) {
+        if (keyListener.isLeft() && paddle.getX() > 0) {
             b.setX(b.getX() - Settings.PADDLE_SPEED);
             b.setHitBox();
         }
-        if (keyListener.isRight()) {
-            System.out.println(b.getX());
+        if (keyListener.isRight() && paddle.getX() + paddle.getWidth() < Settings.GAME_WIDTH) {
             b.setX(b.getX() + Settings.PADDLE_SPEED);
             b.setHitBox();
         }
     }
 
-    private void hitBrick(){
-        if (!ball.isOut()) {
+    private void hitBrick(Ball ball){
+        if (!allBallOut()) {
             for (Brick b : levels[currentLevel].getBrick()) {
                 if (b.isHit(ball) && b.isExist()) {
                     score += Settings.SCORE;
                     destroyedBrick += 1;
+                    // create bonus
                     if (b.getBonus() != "null" && canReleaseBonus) {
                         bonus = new Bonus(b.getCenterX(), b.getCenterY(), b.getBonus());
                         canReleaseBonus = false;
@@ -232,7 +236,7 @@ public class Game implements Runnable{
     }
 
     private void moveBonus(){
-        if (!ball.isOut()) {
+        if (!allBallOut()) {
             if (bonus.isOut()) {
                 bonus.destroy();
                 canReleaseBonus = true;
@@ -240,8 +244,17 @@ public class Game implements Runnable{
                 bonus.move();
             }
             if (paddle.isHit(bonus) && bonus.isExist()) {
+                score += 10;
                 if (bonus.getBonusKind() == "Multi-ball") {
-
+                    ballList.add(new Ball(ballList.get(0).getX(), ballList.get(0).getY(),
+                            Settings.BALL_DIAMETER, Settings.BALL_DIAMETER));
+                    ballList.add(new Ball(ballList.get(0).getX(), ballList.get(0).getY(),
+                            Settings.BALL_DIAMETER, Settings.BALL_DIAMETER));
+                    ballList.get(1).setAngle(ballList.get(0).getAngle() + 30 * new Random().nextDouble());
+                    ballList.get(1).setSpeed(ballList.get(0).getSpeed());
+                    ballList.get(2).setAngle(ballList.get(1).getAngle() + 30 * new Random().nextDouble());
+                    ballList.get(2).setSpeed(ballList.get(0).getSpeed());
+                    paddle.setSpeed(3);
                 } else if (bonus.getBonusKind() == "Wide-Paddle") {
                     paddle.setSuperState();
                     bonus.setBegin();
@@ -257,8 +270,8 @@ public class Game implements Runnable{
         }
     }
 
-    private void hitPaddle(){
-        if (!ball.isOut()) {
+    private void hitPaddle(Ball ball){
+        if (!allBallOut()) {
             if (paddle.isHit(ball) && paddle.getCanHit()) {
                 if (paddle.isSticky()) {
                     ball.setY(paddle.getY() - 2 * Settings.BALL_RADIUS);
@@ -266,17 +279,17 @@ public class Game implements Runnable{
                     ball.setAngle(0.0);
                     launch = false;
                     sticky = true;
-                    paddle.setClear();
+                    closeBonus();
                 }
                 int leftSide = paddle.getX() + paddle.getSideX();
                 int rightSide= paddle.getX() + paddle.getSideX() * 2;
                 if (ball.getCenterX() < leftSide) {
                     if (ball.getAngle() <= 60.0) {
                         ball.setAngle(ball.getAngle() + RandomDoubleCreator.randomDouble(10.0, 30.0));
-                    } else if (ball.getAngle() > 60.0 && ball.getAngle() <= 80.0) {
+                    } else if (ball.getAngle() > 60.0 && ball.getAngle() <= 70.0) {
                         ball.setAngle(ball.getAngle() + RandomDoubleCreator.randomDouble(10.0, 90.0 - ball.getAngle()));
-                    } else if (ball.getAngle() > 80.0 && ball.getAngle() < 90.0) {
-                        ball.setAngle(ball.getAngle() + RandomDoubleCreator.randomDouble(0.0, 90.0 - ball.getAngle()));
+                    } else if (ball.getAngle() > 70.0 && ball.getAngle() < 90.0) {
+                        ball.setAngle(90.0);
                     } else if (ball.getAngle() >= 90.0 && ball.getAngle() <= 100.0) {
                         ball.setAngle(ball.getAngle() + RandomDoubleCreator.randomDouble(20.0, 30.0));
                     } else if (ball.getAngle() > 100 && ball.getAngle() <= 150.0) {
@@ -290,10 +303,10 @@ public class Game implements Runnable{
                 } else if (ball.getCenterX() > rightSide) {
                     if (ball.getAngle() >= 120.0) {
                         ball.setAngle(ball.getAngle() - RandomDoubleCreator.randomDouble(10.0, 30.0));
-                    } else if (ball.getAngle() >= 100.0 && ball.getAngle() < 120.0) {
+                    } else if (ball.getAngle() >= 110.0 && ball.getAngle() < 120.0) {
                         ball.setAngle(ball.getAngle() - RandomDoubleCreator.randomDouble(10.0, ball.getAngle() - 90.0));
-                    } else if (ball.getAngle() > 90.0 && ball.getAngle() < 100.0) {
-                        ball.setAngle(ball.getAngle() - RandomDoubleCreator.randomDouble(0.0, ball.getAngle() - 90.0));
+                    } else if (ball.getAngle() > 90.0 && ball.getAngle() < 110.0) {
+                        ball.setAngle(90.0);
                     } else if (ball.getAngle() >= 80.0 && ball.getAngle() <= 90.0) {
                         ball.setAngle(ball.getAngle() - RandomDoubleCreator.randomDouble(20.0, 30.0));
                     } else if (ball.getAngle() >= 30.0 && ball.getAngle() < 80.0) {
@@ -307,13 +320,15 @@ public class Game implements Runnable{
                 } else if (ball.getCenterX() >= leftSide && ball.getCenterX() <= rightSide) {
                     ball.bounceV();
                 }
-                paddle.setCanHit(false);
+                if (ballList.size() == 1) {
+                    paddle.setCanHit(false);
+                }
             }
         }
     }
 
-    private void boundBounce(){
-        if (!ball.isOut()) {
+    private void boundBounce(Ball ball){
+        if (!allBallOut()) {
             int distanceLeft = ball.getCenterX();
             int distanceRight = Settings.GAME_WIDTH - ball.getCenterX();
             int distanceTop = ball.getCenterY() - Settings.SCREEN_HEIGHT + Settings.GAME_HEIGHT;
@@ -335,21 +350,41 @@ public class Game implements Runnable{
         }
     }
 
-    private void closeBonus(){
-        paddle.setNormalState();
-        if (laser != null) {
-            laser.destroy();
+    private void fireLaser(){
+        if (!allBallOut()) {
+            if (keyListener.isLaunch() && laser.isExist()) {
+                int destroyLine = laser.getX() + Settings.LASER_WIDTH / 2;
+                for (Brick b : levels[currentLevel].getBrick()) {
+                    if (Math.abs(destroyLine - b.getCenterX()) < Settings.BRICK_WIDTH / 2) {
+                        b.destroy();
+                    }
+                }
+                laser.destroy();
+            }
         }
     }
 
+    private void closeBonus(){
+        bonusExistCount = 0;
+        if (bonus != null) {
+            bonus.setClose();
+        }
+        paddle.setNormalState();
+        paddle.setClear();
+        if (laser != null) {
+            laser.destroy();
+        }
+        canReleaseBonus = true;
+    }
+
     private void reset(){
-        ball = new Ball(Settings.BALL_ORIGIN_X, Settings.BALL_ORIGIN_Y, Settings.BALL_DIAMETER, Settings.BALL_DIAMETER);
+        ballList = new ArrayList<>();
+        ballList.add(new Ball(Settings.BALL_ORIGIN_X, Settings.BALL_ORIGIN_Y, Settings.BALL_DIAMETER, Settings.BALL_DIAMETER));
         paddle = new Paddle(Settings.PADDLE_ORIGIN_X, keyListener);
         if (bonus != null) {
             bonus.destroy();
         }
         closeBonus();
-
         launch = false;
     }
 
@@ -357,11 +392,15 @@ public class Game implements Runnable{
         return levels[currentLevel].getBrick();
     }
 
-    public int getBallX(){
+    public List<Ball> getBallList(){
+        return ballList;
+    }
+
+    public int getBallX(Ball ball){
         return ball.getX();
     }
 
-    public int getBallY(){
+    public int getBallY(Ball ball){
         return ball.getY();
     }
 
@@ -375,5 +414,9 @@ public class Game implements Runnable{
 
     public Laser getLaser(){
         return laser;
+    }
+
+    public boolean isPaused(){
+        return pause;
     }
 }

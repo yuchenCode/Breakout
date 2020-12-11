@@ -8,17 +8,20 @@ import java.awt.*;
 public class MainScreen extends JPanel {
 
     public void paintComponent(Graphics g) {
+
+        // paint menu
         g.setColor(Color.GRAY);
         g.fillRect(0, 0, Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT);
-        drawString(g, "Welcome to Breakout!!!!", new Rectangle(Settings.SCREEN_WIDTH / 3, Settings.SCREEN_HEIGHT / 10, Settings.SCREEN_WIDTH / 3, Settings.SCREEN_HEIGHT / 3),
-                24);
-        drawString(g, "To play a game press S", new Rectangle(Settings.SCREEN_WIDTH / 3, 2 * Settings.SCREEN_HEIGHT / 8, Settings.SCREEN_WIDTH / 3, Settings.SCREEN_HEIGHT / 3),
-                18);
-        drawString(g, "To see the High scores press H",
-                new Rectangle(Settings.SCREEN_WIDTH / 3, 3 * Settings.SCREEN_HEIGHT / 8, Settings.SCREEN_WIDTH / 3, Settings.SCREEN_HEIGHT / 3), 18);
-        drawString(g, "For help press A", new Rectangle(Settings.SCREEN_WIDTH / 3, 4 * Settings.SCREEN_HEIGHT / 8, Settings.SCREEN_WIDTH / 3, Settings.SCREEN_HEIGHT / 3), 18);
-        drawString(g, "To exit press X", new Rectangle(Settings.SCREEN_WIDTH / 3, 5 * Settings.SCREEN_HEIGHT / 8, Settings.SCREEN_WIDTH / 3, Settings.SCREEN_HEIGHT / 3), 18);
-
+        drawString(g, "Welcome to Breakout!!!", new Rectangle(Settings.GAME_WIDTH / 3, Settings.SCREEN_HEIGHT / 12,
+                        Settings.SCREEN_WIDTH / 3, Settings.SCREEN_HEIGHT / 3), 24);
+        drawString(g, "To play a game press S", new Rectangle(Settings.GAME_WIDTH / 3, 2 * Settings.SCREEN_HEIGHT / 8,
+                        Settings.SCREEN_WIDTH / 3, Settings.SCREEN_HEIGHT / 3), 18);
+        drawString(g, "To see the High scores press H", new Rectangle(Settings.GAME_WIDTH / 3, 3 * Settings.SCREEN_HEIGHT / 8,
+                        Settings.SCREEN_WIDTH / 3, Settings.SCREEN_HEIGHT / 3), 18);
+        drawString(g, "For help press A", new Rectangle(Settings.GAME_WIDTH / 3, 4 * Settings.SCREEN_HEIGHT / 8,
+                        Settings.SCREEN_WIDTH / 3, Settings.SCREEN_HEIGHT / 3), 18);
+        drawString(g, "To exit press X", new Rectangle(Settings.GAME_WIDTH / 3, 5 * Settings.SCREEN_HEIGHT / 8,
+                        Settings.SCREEN_WIDTH / 3, Settings.SCREEN_HEIGHT / 3), 18);
     }
 
     private void drawString(Graphics g, String text, Rectangle rect, int size) {

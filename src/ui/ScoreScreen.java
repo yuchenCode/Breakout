@@ -19,18 +19,21 @@ public class ScoreScreen extends JPanel {
     }
 
     public void paintComponent(Graphics g) {
+
+        // paint high scores
+        g.setColor(Color.GRAY);
         g.fillRect(0, 0, Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT);
-        drawString(g, "Breakout Hall of Fame", new Rectangle(0, 0, Settings.SCREEN_WIDTH, Settings.SCREEN_HEIGHT / 8),
-                36);
+        drawString(g, "Breakout Hall of Fame", new Rectangle(0, 0,
+                        Settings.GAME_WIDTH, Settings.SCREEN_HEIGHT / 8), 36);
         g.setColor(Color.GREEN);
         Score[] scores = scoreRecorder.getScores();
         g.setFont(new Font("Consolas", Font.BOLD, 24));
         for (int i = 0; i < scores.length; i++) {
             Score score = scores[i];
-            g.drawString(score.getName(), 2 * Settings.SCREEN_WIDTH / 6, 96 + i * 32);
-            g.drawString("" + score.getScore(), 4 * Settings.SCREEN_WIDTH / 6, 96 + i * 32);
+            g.drawString(score.getName(), 2 * Settings.GAME_WIDTH / 6, 96 + i * 32);
+            g.drawString("" + score.getScore(), 4 * Settings.GAME_WIDTH / 6, 96 + i * 32);
         }
-        drawString(g, "Press 'M' to return to the Main Menu", new Rectangle(0, 416, Settings.SCREEN_WIDTH, 96), 24);
+        drawString(g, "Press 'M' to return to the Main Menu", new Rectangle(0, 380, Settings.GAME_WIDTH, 96), 24);
     }
 
     private void drawString(Graphics g, String text, Rectangle rect, int size) {

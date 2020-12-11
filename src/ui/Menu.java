@@ -48,6 +48,8 @@ public class Menu {
                 }
             }
         }.start();
+
+        // control screen
         while (!exit) {
             if (keyListener.isStart()) {
                 game = new Game(gameScreen, keyListener);
