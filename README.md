@@ -1,2 +1,3 @@
 # Breakout
- The breakout game--OOP assignment
+A traditional Game implemented by Java
+Assignment of OOP
